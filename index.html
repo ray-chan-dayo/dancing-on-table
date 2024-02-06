@@ -6,6 +6,21 @@
 <script src="node_modules/@ar-js-org/ar.js/three.js/build/ar-threex.js"></script>
 <script>THREEx.ArToolkitContext.baseURL = './'</script>
 
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+<script type="importmap">
+    {
+        "imports": {
+            "fflate": "https://unpkg.com/fflate@0.7.4/esm/browser.js",
+            "three": "../node_modules/three/build/three.module.min.js",
+            "three/addons/": "../node_modules/three/examples/jsm/",
+            "@pixiv/three-vrm": "../node_modules/@pixiv/three-vrm/lib/three-vrm.module.js"
+        }
+    }
+</script>
+
+<script type="module" src="main.js"></script>
+
 <body style='font-family: Monospace;'>
     <div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
         <a href="https://github.com/AR-js-org/AR.js/" target="_blank">AR.js</a> - three.js camera transform
@@ -35,6 +50,9 @@
 
         // init scene and camera
         var scene = new THREE.Scene();
+
+        //load vrm-mixamo-three.js
+        initvrmthree()
 
         //////////////////////////////////////////////////////////////////////////////////
         //		Initialize a basic camera
@@ -100,8 +118,9 @@
 
         function initARContext() { // create atToolkitContext
             arToolkitContext = new THREEx.ArToolkitContext({
-                cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'camera_para.dat',
-                detectionMode: 'mono'
+                cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'example/camera_para.dat',
+                detectionMode: 'mono',
+                debug: true
             })
             // initialize it
             arToolkitContext.init(() => { // copy projection matrix to camera
@@ -117,7 +136,7 @@
             // MARKER
             arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
                 type: 'pattern',
-                patternUrl: THREEx.ArToolkitContext.baseURL + 'pattern-marker.patt',
+                patternUrl: THREEx.ArToolkitContext.baseURL + 'example/pattern-marker.patt',
                 // patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
                 // as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
                 changeMatrixMode: 'cameraTransformMatrix'
@@ -196,9 +215,21 @@
             renderer.render(scene, camera);
         })
 
+        //deltaを取得するためclockを定義
+        const clock = new THREE.Clock();
+        // const dara = initvrmthree( modelUrl )
+        // const currentMixer = initvrmthree( modelUrl )[0]
+        // const currentVrm = initvrmthree( modelUrl )[0]
+
         // run the rendering loop
         var lastTimeMsec = null
-        requestAnimationFrame(function animate(nowMsec) {
+        function animate(nowMsec) {
+	
+            //mixamoアニメーション
+            // const deltaTime = clock.getDelta();
+            // currentMixer.update( deltaTime );
+            // currentVrm.update( deltaTime );
+
             // keep looping
             requestAnimationFrame(animate);
             // measure time
@@ -209,6 +240,12 @@
             onRenderFcts.forEach(function (onRenderFct) {
                 onRenderFct(deltaMsec / 1000, nowMsec / 1000)
             })
-        })
+        }
+        async () => {
+            // await Promise.all([currentMixer, currentVrm])
+            // console.log(currentMixer)
+            // console.log(currentVrm)
+            requestAnimationFrame(animate)
+        }
     </script>
 </body>

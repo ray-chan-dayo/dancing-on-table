@@ -1,117 +1,127 @@
-let w;
-let h;
-let canvas;
-let scene;
-let camera;
-let renderer;
-let object;
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { loadMixamoAnimation } from '/humanoidAnimation/loadMixamoAnimation.js';
+// import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
-let arToolkitSource;
-let arToolkitContext;
+// renderer
+// const renderer = new THREE.WebGLRenderer();
+// renderer.setSize( window.innerWidth, window.innerHeight );
+// renderer.setPixelRatio( window.devicePixelRatio );
+// document.body.appendChild( renderer.domElement );
 
-const init = () => {
-  w = window.innerWidth;
-  h = window.innerHeight;
-  canvas = document.getElementById("canvas");
-  setScene();
-  setCamera();
-  setObject();
-  setArToolkit();
-  setRenderer();
-};
+// camera
+// const camera = new THREE.PerspectiveCamera( 30.0, window.innerWidth / window.innerHeight, 0.1, 20.0 );
+// camera.position.set( 0.0, 1.0, 5.0 );
 
-const setScene = () => {
-  scene = new THREE.Scene();
-  scene.visible = false;
-};
+// camera controls
+// const controls = new OrbitControls( camera, renderer.domElement );
+// controls.screenSpacePanning = true;
+// controls.target.set( 0.0, 1.0, 0.0 );
+// controls.update();
 
-const setCamera = () => {
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 30);
-  scene.add(camera);
-};
+// scene
+// const scene = new THREE.Scene();
 
-const setArToolkit = () => {
-  arToolkitSource = new THREEx.ArToolkitSource({
-    sourceType: "webcam",
-  });
+// light
+// const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
+// light.position.set( 1.0, 1.0, 1.0 ).normalize();
+// scene.add( light );
 
-  arToolkitSource.init(() => {
-    setTimeout(() => {
-      onResize();
-    }, 2000);
-  });
-
-  arToolkitContext = new THREEx.ArToolkitContext({
-    cameraParametersUrl:
-      THREEx.ArToolkitContext.baseURL + "../data/data/camera_para.dat",
-    detectionMode: "mono",
-    // ※1 作ったマーカーのPattern Ratioを入れる
-    patternRatio: 0.8,
-  });
-
-  arToolkitContext.init(
-    (onCompleted = () => {
-      camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-    })
-  );
-
-  let onRenderFcts = [];
-  onRenderFcts.push(() => {
-    if (arToolkitSource.ready === false) return;
-    arToolkitContext.update(arToolkitSource.domElement);
-    scene.visible = camera.visible;
-  });
-
-  const markerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
-    type: "pattern",
-    // ※2 マーカーのpattファイルのパスを入れる
-    patternUrl: "/static/patt/marker.patt",
-    changeMatrixMode: "cameraTransformMatrix",
-  });
-};
-
-const setObject = () => {
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshNormalMaterial();
-  object = new THREE.Mesh(geometry, material);
-  object.position.set(0, 0, 0);
-  scene.add(object);
-};
-
-const setRenderer = () => {
-  renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true,
-    canvas: canvas,
-  });
-  renderer.setClearColor(0x000000, 0);
-  renderer.setSize(w, h);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setAnimationLoop(() => {
-    render();
-  });
-};
-
-const render = () => {
-  if (arToolkitSource.ready) {
-    arToolkitContext.update(arToolkitSource.domElement);
-    scene.visible = camera.visible;
-  }
-  renderer.render(scene, camera);
-};
-
-const onResize = () => {
-  arToolkitSource.onResizeElement();
-  arToolkitSource.copyElementSizeTo(renderer.domElement);
-  if (arToolkitContext.arController !== null) {
-    arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
-  }
-};
-
-window.addEventListener("resize", () => {
-  onResize();
-});
-
-window.onload = () => {
-  init();
-};
+window.initvrmthree = function initvrmthree( scene ) {
+	const defaultModelUrl = 'rei_siro8.vrm';
+	const mixamoFbxUrl = 'Dancing.fbx'
+	
+	// gltf and vrm
+	let currentVrm = undefined;
+	let currentAnimationUrl = undefined;
+	let currentMixer = undefined;
+	
+	function loadVRM( modelUrl ) {
+	
+		const loader = new GLTFLoader();
+		loader.crossOrigin = 'anonymous';
+	
+		// helperRoot.clear();
+	
+		loader.register( ( parser ) => {
+	
+			return new VRMLoaderPlugin( parser, { helperRoot: helperRoot, autoUpdateHumanBones: true } );
+	
+		} );
+	
+		loader.load(
+			// URL of the VRM you want to load
+			modelUrl,
+	
+			// called when the resource is loaded
+			( gltf ) => {
+	
+				const vrm = gltf.userData.vrm;
+	
+				if ( currentVrm ) {
+	
+					scene.remove( currentVrm.scene );
+	
+					VRMUtils.deepDispose( currentVrm.scene );
+	
+				}
+	
+				// put the model to the scene
+				currentVrm = vrm;
+				scene.add( vrm.scene );
+	
+				// Disable frustum culling
+				vrm.scene.traverse( ( obj ) => {
+	
+					obj.frustumCulled = false;
+	
+				} );
+	
+				if ( currentAnimationUrl ) {
+	
+					loadFBX( currentAnimationUrl );
+	
+				}
+	
+				// rotate if the VRM is VRM0.0
+				VRMUtils.rotateVRM0( vrm );
+	
+				console.log( vrm );
+	
+			},
+	
+			// called while loading is progressing
+			( progress ) => console.log( 'Loading model...', 100.0 * ( progress.loaded / progress.total ), '%' ),
+	
+			// called when loading has errors
+			( error ) => console.error( error ),
+		);
+	
+	}
+	
+	loadVRM( defaultModelUrl );
+	
+	// mixamo animation
+	function loadFBX( animationUrl ) {
+	
+		currentAnimationUrl = animationUrl;
+	
+		// create AnimationMixer for VRM
+		currentMixer = new THREE.AnimationMixer( currentVrm.scene );
+	
+		// Load animation
+		loadMixamoAnimation( animationUrl, currentVrm ).then( ( clip ) => {
+	
+			// Apply the loaded animation to mixer and play
+			currentMixer.clipAction( clip ).play();
+			currentMixer.timeScale = params.timeScale;
+	
+		} );
+	
+	}
+	
+	loadFBX( mixamoFbxUrl );
+	return [currentMixer, currentVrm]
+}
