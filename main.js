@@ -1,4 +1,3 @@
-
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -30,6 +29,11 @@ var arToolkitContext, arMarkerControls;
 // init scene and camera
 var scene = new THREE.Scene();
 
+// light
+const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
+light.position.set( 1.0, 1.0, 1.0 ).normalize();
+scene.add( light );
+
 //load vrm-mixamo-three.js
 const defaultModelUrl = './humanoidAnimation/rei_siro8.vrm';
 const mixamoFbxUrl = './humanoidAnimation/Dancing.fbx'
@@ -41,7 +45,7 @@ let currentMixer = undefined;
 
 const helperRoot = new THREE.Group();
 helperRoot.renderOrder = 10000;
-scene.add( helperRoot );
+// scene.add( helperRoot );
 
 //////////////////////////////////////////////////////////////////////////////////
 //		Initialize a basic camera
@@ -54,7 +58,7 @@ scene.add(camera);
 ////////////////////////////////////////////////////////////////////////////////
 var arToolkitSource = new THREEx.ArToolkitSource({
     // to read from the webcam
-    sourceType: 'webcam',
+    // sourceType: 'webcam',
     sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
     sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
     // // to read from an image
@@ -86,9 +90,9 @@ window.addEventListener('resize', function () {
 function onResize() {
     arToolkitSource.onResizeElement()
     arToolkitSource.copyElementSizeTo(renderer.domElement)
-    if (window.arToolkitContext.arController !== null) {
-        arToolkitSource.copyElementSizeTo(window.arToolkitContext.arController.canvas)
-    }
+    // if (window.arToolkitContext.arController !== null) {
+    //     arToolkitSource.copyElementSizeTo(window.arToolkitContext.arController.canvas)
+    // }
 }
 ////////////////////////////////////////////////////////////////////////////////
 //          initialize arToolkitContext
@@ -106,6 +110,7 @@ function initARContext() { // create atToolkitContext
         arToolkitContext.arController.options.orientation = getSourceOrientation();
         console.log('arToolkitContext', arToolkitContext);
         window.arToolkitContext = arToolkitContext;
+        arToolkitContext.arController.canvas.remove()
     })
     // MARKER
     arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
@@ -290,6 +295,4 @@ requestAnimationFrame(function animate(nowMsec) {
 		currentVrm.update( deltaTime );
 
 	}
-
-	renderer.render( scene, camera );
 })
