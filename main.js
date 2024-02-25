@@ -6,6 +6,10 @@ import { loadMixamoAnimation } from './humanoidAnimation/loadMixamoAnimation.js'
 // import * as THREEx from './ar-threex.js'
 import { THREEx } from './ar-threex.js'
 
+//load vrm-mixamo-three.js
+const defaultModelUrl = './assets/model.vrm';
+const mixamoFbxUrl = './assets/Waving.fbx'
+let videoelem
 //index.htmlから移動
 THREEx.ArToolkitContext.baseURL = './'
 
@@ -18,7 +22,7 @@ var renderer = new THREE.WebGLRenderer({
     alpha: true
 });
 renderer.setClearColor(new THREE.Color('lightgrey'), 0)
-renderer.setSize(640, 480);
+renderer.setSize(1920, 1080);
 renderer.domElement.style.position = 'absolute'
 renderer.domElement.style.top = '0px'
 renderer.domElement.style.left = '0px'
@@ -33,10 +37,6 @@ var scene = new THREE.Scene();
 const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
 light.position.set( 1.0, 1.0, 1.0 ).normalize();
 scene.add( light );
-
-//load vrm-mixamo-three.js
-const defaultModelUrl = './humanoidAnimation/rei_siro8.vrm';
-const mixamoFbxUrl = './humanoidAnimation/Dancing.fbx'
 
 // gltf and vrm
 let currentVrm = undefined;
@@ -128,6 +128,7 @@ function getSourceOrientation() {
     if (!arToolkitSource) {
         return null;
     }
+    videoelem = arToolkitSource.domElement
     console.log(
         'actual source dimensions',
         arToolkitSource.domElement.videoWidth,
@@ -296,3 +297,27 @@ requestAnimationFrame(function animate(nowMsec) {
 
 	}
 })
+const cameraDeviceIds = [/* { deviceId, label } */];
+navigator.mediaDevices.enumerateDevices().then(function(mediaDevices) {
+  for (let len = mediaDevices.length, i = 0; i < len; i++) {
+    const item = mediaDevices[i];
+    // NOTE: カメラデバイスの場合、 kind プロパティには "videoinput" が入っている:
+    if (item.kind === "videoinput") {
+      const deviceId = item.deviceId;
+      const label = item.label;
+      // NOTE: ここでデバイスID（とラベル）を適当な変数に保存しておく
+      cameraDeviceIds.push({ deviceId, label });
+    }
+  }
+});
+document.getElementsByClassName("changeCamera")[0].onclick = ()=>{
+    navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          deviceId: cameraDeviceIds[0],
+        },
+      }).then(function(stream) {
+        videoelem.srcObject = stream;
+        console.log(cameraDeviceIds)
+      })
+}
