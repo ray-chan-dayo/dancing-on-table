@@ -59,8 +59,8 @@ scene.add(camera);
 var arToolkitSource = new THREEx.ArToolkitSource({
     // to read from the webcam
     // sourceType: 'webcam',
-    sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
-    sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
+    sourceWidth: window.innerWidth > window.innerHeight ? 1280 : 960,
+    sourceHeight: window.innerWidth > window.innerHeight ? 960 : 1280,
     // // to read from an image
     // sourceType : 'image',
     // sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',
@@ -115,12 +115,12 @@ function initARContext() { // create atToolkitContext
     // MARKER
     arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
         type: 'pattern',
-        patternUrl: THREEx.ArToolkitContext.baseURL + 'example/pattern-marker.patt',
+        patternUrl: THREEx.ArToolkitContext.baseURL + 'assets/pattern-ss_qrcode.patt',
         // patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
         // as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
         changeMatrixMode: 'cameraTransformMatrix'
-    })
-    scene.visible = false
+    });
+    scene.visible = false;
     console.log('ArMarkerControls', arMarkerControls);
     window.arMarkerControls = arMarkerControls;
 }
